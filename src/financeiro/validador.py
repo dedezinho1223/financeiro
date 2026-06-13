@@ -70,6 +70,20 @@ def validar(
     # 6. Sequência quebrada
     erros.extend(_validar_sequencia(df))
 
+    # 7. NF duplicada (pagamento em dobro)
+    if config.get("detectar_nf_duplicada", True):
+        janela = config.get("janela_nf_dias", 5)
+        erros.extend(_detectar_nf_duplicadas(df, janela_dias=janela))
+
+    # 8. Checar CNPJ online (opcional — desabilitado por padrão)
+    if config.get("checar_cnpj_online", False):
+        try:
+            from .cnpj_checker import _checar_cnpjs_no_validador
+
+            erros.extend(_checar_cnpjs_no_validador(df, config))
+        except ImportError:
+            console.print("[yellow]⚠ requests não instalado — checagem online ignorada.[/yellow]")
+
     # Salvar relatório
     _salvar_relatorio(erros, saida)
 
@@ -280,6 +294,117 @@ def _validar_sequencia(df: pd.DataFrame) -> list[dict]:
                     "Tipo Erro": "Sequência quebrada",
                     "Sugestão": f"Faltando: {', '.join(faltando[:5])}",
                 })
+
+    return erros
+
+
+def _detectar_nf_duplicadas(df: pd.DataFrame, janela_dias: int = 5) -> list[dict]:
+    """Detecta notas fiscais duplicadas que podem causar pagamento em dobro.
+
+    Regras:
+        1. Mesmo NF + mesmo fornecedor = duplicata certa
+        2. Mesmo NF + mesmo valor + datas diferentes = mesma NF paga 2x
+        3. Mesmo fornecedor + mesmo valor dentro de N dias = suspeito
+    """
+    erros = []
+
+    colunas_nf = _encontrar_colunas(df, ["nf", "nota_fiscal", "nota", "numero_nf"])
+    colunas_forn = _encontrar_colunas(df, ["fornecedor", "razao", "cnpj_fornec", "supplier", "parceiro"])
+    colunas_valor = _encontrar_colunas(df, ["valor", "vlr", "total", "montante"])
+    colunas_data = _encontrar_colunas(df, ["data", "dt", "date", "vencimento"])
+
+    col_nf = colunas_nf[0] if colunas_nf else None
+    col_forn = colunas_forn[0] if colunas_forn else None
+    col_valor = colunas_valor[0] if colunas_valor else None
+    col_data = colunas_data[0] if colunas_data else None
+
+    if not col_nf and not (col_forn and col_valor):
+        return erros
+
+    # Preparar colunas numéricas/data
+    if col_valor:
+        valores = df[col_valor].apply(padronizar_moeda)
+    if col_data:
+        datas = df[col_data].apply(padronizar_data)
+
+    # Regra 1: Mesmo NF + mesmo fornecedor
+    if col_nf and col_forn:
+        vistos = {}
+        for idx, row in df.iterrows():
+            nf = str(row[col_nf]).strip().lower()
+            forn = str(row[col_forn]).strip().lower()
+            if pd.isna(row[col_nf]) or nf in ("", "nan"):
+                continue
+            chave = (nf, forn)
+            if chave in vistos:
+                erros.append({
+                    "Linha": idx + 2,
+                    "Coluna": col_nf,
+                    "Valor": f"NF {row[col_nf]} / {row[col_forn]}",
+                    "Tipo Erro": "NF duplicada (mesmo fornecedor)",
+                    "Sugestão": f"Mesma NF já aparece na linha {vistos[chave] + 2} — possível pagamento em dobro",
+                })
+            else:
+                vistos[chave] = idx
+
+    # Regra 2: Mesmo NF + mesmo valor + datas diferentes
+    if col_nf and col_valor and col_data:
+        grupos_nf = {}
+        for idx, row in df.iterrows():
+            nf = str(row[col_nf]).strip().lower()
+            if pd.isna(row[col_nf]) or nf in ("", "nan"):
+                continue
+            val = valores.iloc[idx] if idx < len(valores) else None
+            dt = datas.iloc[idx] if idx < len(datas) else None
+            if val is not None and dt is not None:
+                grupos_nf.setdefault(nf, []).append((idx, val, dt))
+
+        for nf, itens in grupos_nf.items():
+            if len(itens) < 2:
+                continue
+            for i in range(1, len(itens)):
+                idx_a, val_a, dt_a = itens[0]
+                idx_b, val_b, dt_b = itens[i]
+                if val_a == val_b and dt_a != dt_b and dt_a is not None and dt_b is not None:
+                    erros.append({
+                        "Linha": idx_b + 2,
+                        "Coluna": col_nf,
+                        "Valor": f"NF {nf} / R$ {val_b:,.2f}",
+                        "Tipo Erro": "NF duplicada (mesmo valor, data diferente)",
+                        "Sugestão": f"Mesma NF e valor, mas data difere da linha {idx_a + 2} — mesma NF paga 2x?",
+                    })
+
+    # Regra 3: Mesmo fornecedor + mesmo valor dentro da janela de dias
+    if col_forn and col_valor and col_data:
+        from datetime import timedelta
+
+        grupos_forn = {}
+        for idx, row in df.iterrows():
+            forn = str(row[col_forn]).strip().lower()
+            if pd.isna(row[col_forn]) or forn in ("", "nan"):
+                continue
+            val = valores.iloc[idx] if idx < len(valores) else None
+            dt = datas.iloc[idx] if idx < len(datas) else None
+            if val is not None and dt is not None and val != 0:
+                grupos_forn.setdefault((forn, val), []).append((idx, dt))
+
+        for (forn, val), itens in grupos_forn.items():
+            if len(itens) < 2:
+                continue
+            itens.sort(key=lambda x: x[1] if x[1] else datetime.min)
+            for i in range(1, len(itens)):
+                idx_ant, dt_ant = itens[i - 1]
+                idx_cur, dt_cur = itens[i]
+                if dt_ant and dt_cur:
+                    diff = abs((dt_cur - dt_ant).days)
+                    if diff <= janela_dias and diff > 0:
+                        erros.append({
+                            "Linha": idx_cur + 2,
+                            "Coluna": col_forn,
+                            "Valor": f"{forn[:30]} / R$ {val:,.2f} / {diff}d",
+                            "Tipo Erro": "Pagamento suspeito (fornecedor + valor similar)",
+                            "Sugestão": f"Mesmo fornecedor e valor a {diff} dia(s) da linha {idx_ant + 2} — conferir se não é duplicado",
+                        })
 
     return erros
 

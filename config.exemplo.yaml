@@ -39,3 +39,13 @@ validador:
   detectar_datas_futuras: true
   detectar_outliers: true
   fator_outlier: 3.0          # Multiplicador do desvio padrão
+  detectar_nf_duplicada: true # Detecta NFs que podem gerar pagamento em dobro
+  janela_nf_dias: 5           # Dias para considerar pagamento suspeito (regra 3)
+  checar_cnpj_online: false   # Checar situação do CNPJ na Receita (lento/requer internet)
+
+cnpj_checker:
+  api: "brasilapi"            # brasilapi ou receitaws
+  intervalo_requests: 1.5     # Segundos entre requests (respeitar rate limit)
+  timeout: 10                 # Timeout por request em segundos
+  cache_dir: ".cache"         # Pasta para cache de resultados
+  cache_dias: 30              # Dias de validade do cache

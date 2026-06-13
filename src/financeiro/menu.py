@@ -143,6 +143,26 @@ def menu_validar():
     validar(arquivo, saida=saida)
 
 
+def menu_checar_cnpj():
+    """Menu interativo para checagem online de CNPJs."""
+    console.print(Panel(
+        "[bold]Checar CNPJ na Receita Federal[/bold]\n\n"
+        "Vou verificar se os CNPJs da sua planilha estão ativos.\n"
+        "[dim]Requer conexão com a internet.[/dim]",
+        style="cyan",
+    ))
+
+    arquivo = escolher_arquivo("Selecione a planilha com CNPJs", "dados")
+    if not arquivo:
+        return
+
+    saida = "saida/cnpj_check.xlsx"
+    console.print(f"\n[dim]Resultado será salvo em: {saida}[/dim]\n")
+
+    from financeiro.cnpj_checker import checar_cnpjs
+    checar_cnpjs(arquivo, saida=saida)
+
+
 def menu_principal():
     """Menu principal interativo."""
     # Garantir que as pastas existem
@@ -156,7 +176,8 @@ def menu_principal():
             "  [green]1[/green]) 🏦 Conciliação Bancária\n"
             "  [green]2[/green]) 📂 Consolidar Planilhas\n"
             "  [green]3[/green]) 📈 Gerar Relatório\n"
-            "  [green]4[/green]) 🔍 Validar Dados\n\n"
+            "  [green]4[/green]) 🔍 Validar Dados\n"
+            "  [green]5[/green]) 🌐 Checar CNPJ (online)\n\n"
             "  [red]0[/red]) Sair",
             title="💰 Menu Principal",
             border_style="cyan",
@@ -172,6 +193,8 @@ def menu_principal():
             menu_relatorio()
         elif opcao == 4:
             menu_validar()
+        elif opcao == 5:
+            menu_checar_cnpj()
         elif opcao == 0:
             console.print("\n[cyan]Até logo! 👋[/cyan]\n")
             break

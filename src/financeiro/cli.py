@@ -71,6 +71,18 @@ def validar(
     _validar(arquivo, saida=saida, config_path=config)
 
 
+@app.command("checar-cnpj")
+def checar_cnpj(
+    arquivo: str = typer.Argument(..., help="Planilha com coluna de CNPJ (.xlsx)"),
+    saida: str = typer.Option("saida/cnpj_check.xlsx", "--saida", "-s", help="Relatório de saída"),
+    config: str = typer.Option("config.yaml", "--config", "-c", help="Arquivo de configuração"),
+):
+    """Verifica situação cadastral de CNPJs na Receita Federal (online)."""
+    from .cnpj_checker import checar_cnpjs
+
+    checar_cnpjs(arquivo, saida=saida, config_path=config)
+
+
 @app.command()
 def menu():
     """Abre o menu interativo (modo fácil — sem decorar comandos)."""

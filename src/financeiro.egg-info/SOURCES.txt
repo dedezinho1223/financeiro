@@ -2,6 +2,7 @@ README.md
 pyproject.toml
 src/financeiro/__init__.py
 src/financeiro/cli.py
+src/financeiro/cnpj_checker.py
 src/financeiro/conciliacao.py
 src/financeiro/consolidador.py
 src/financeiro/menu.py
@@ -14,4 +15,6 @@ src/financeiro.egg-info/dependency_links.txt
 src/financeiro.egg-info/entry_points.txt
 src/financeiro.egg-info/requires.txt
 src/financeiro.egg-info/top_level.txt
+tests/test_cnpj_checker.py
+tests/test_nf_duplicada.py
 tests/test_utils.py
