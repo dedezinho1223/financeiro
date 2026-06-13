@@ -4,6 +4,7 @@ src/financeiro/__init__.py
 src/financeiro/cli.py
 src/financeiro/conciliacao.py
 src/financeiro/consolidador.py
+src/financeiro/menu.py
 src/financeiro/relatorios.py
 src/financeiro/utils.py
 src/financeiro/validador.py

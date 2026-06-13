@@ -71,21 +71,22 @@ def validar(
     _validar(arquivo, saida=saida, config_path=config)
 
 
+@app.command()
+def menu():
+    """Abre o menu interativo (modo fácil — sem decorar comandos)."""
+    from .menu import menu_principal
+
+    menu_principal()
+
+
 @app.callback(invoke_without_command=True)
 def main(ctx: typer.Context):
     """Sistema Financeiro Automatizado."""
     if ctx.invoked_subcommand is None:
-        console.print(Panel(
-            "[bold cyan]Sistema Financeiro Automatizado[/bold cyan]\n\n"
-            "Comandos disponíveis:\n"
-            "  [green]conciliar[/green]   — Conciliação bancária automática\n"
-            "  [green]consolidar[/green]  — Unir múltiplas planilhas\n"
-            "  [green]relatorio[/green]   — DRE, fluxo de caixa, fechamento\n"
-            "  [green]validar[/green]     — Detectar erros nos dados\n\n"
-            "Use [yellow]financeiro COMANDO --help[/yellow] para detalhes.",
-            title="💰 Financeiro",
-            border_style="cyan",
-        ))
+        # Sem subcomando: abre o menu interativo direto
+        from .menu import menu_principal
+
+        menu_principal()
 
 
 if __name__ == "__main__":
