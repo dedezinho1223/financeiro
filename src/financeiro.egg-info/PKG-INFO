@@ -1,0 +1,130 @@
+Metadata-Version: 2.4
+Name: financeiro
+Version: 1.0.0
+Summary: Sistema Financeiro Automatizado — CLI para conciliação, consolidação, relatórios e validação
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: pandas>=2.2
+Requires-Dist: openpyxl>=3.1
+Requires-Dist: typer>=0.15
+Requires-Dist: rich>=14.0
+Requires-Dist: python-dateutil>=2.9
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: rapidfuzz>=3.12
+
+# 💰 Sistema Financeiro Automatizado
+
+CLI em Python para automatizar tarefas financeiras repetitivas.
+
+## Funcionalidades
+
+| Comando | O que faz |
+|---------|-----------|
+| `financeiro conciliar` | Cruza extrato bancário vs. controle interno e aponta divergências |
+| `financeiro consolidar` | Junta múltiplas planilhas em base única padronizada |
+| `financeiro relatorio` | Gera DRE, fluxo de caixa ou fechamento mensal |
+| `financeiro validar` | Detecta erros: CNPJ/CPF inválido, duplicatas, datas impossíveis, outliers |
+
+## Instalação
+
+```bash
+# 1. Instale Python 3.10+ (https://python.org)
+
+# 2. Entre na pasta do projeto
+cd financeiro
+
+# 3. Instale as dependências
+pip install -r requirements.txt
+
+# 4. Instale o CLI
+pip install -e .
+```
+
+## Configuração
+
+Copie o arquivo de exemplo e ajuste:
+
+```bash
+copy config.exemplo.yaml config.yaml
+```
+
+Edite `config.yaml` para definir nomes de colunas, tolerâncias e categorias.
+
+## Uso
+
+### Conciliação Bancária
+
+Cruza extrato do banco com seu controle interno:
+
+```bash
+financeiro conciliar extrato_banco.xlsx controle_interno.xlsx
+financeiro conciliar extrato.xlsx interno.xlsx --saida resultado.xlsx
+```
+
+Resultado: Excel com abas "Conciliados", "Só no Banco", "Só no Interno", "Divergências".
+
+### Consolidar Planilhas
+
+Junta todos os .xlsx de uma pasta em um arquivo único:
+
+```bash
+financeiro consolidar dados/
+financeiro consolidar planilhas_filiais/ --saida consolidado_2024.xlsx
+```
+
+Trata automaticamente: formatos de data diferentes, moeda (R$ 1.234,56), nomes de coluna variados.
+
+### Gerar Relatórios
+
+```bash
+# DRE simplificado
+financeiro relatorio lancamentos.xlsx --tipo dre
+
+# Fluxo de caixa mensal
+financeiro relatorio lancamentos.xlsx --tipo fluxo
+
+# Fechamento mensal
+financeiro relatorio lancamentos.xlsx --tipo fechamento
+```
+
+### Validar Dados
+
+```bash
+financeiro validar planilha.xlsx
+```
+
+Detecta:
+- CNPJs/CPFs com dígitos errados
+- Lançamentos duplicados
+- Datas impossíveis ou futuras
+- Campos obrigatórios vazios
+- Valores outlier (possível erro de digitação)
+- Sequência de NFs quebrada
+
+## Estrutura das Planilhas
+
+O sistema detecta colunas automaticamente por nome. Nomes aceitos:
+
+| Campo | Nomes reconhecidos |
+|-------|-------------------|
+| Data | data, dt, date, vencimento, data_pgto |
+| Valor | valor, vlr, value, total, montante |
+| Descrição | descrição, histórico, memo, obs |
+| Categoria | categoria, tipo, classificação, conta |
+| Documento | cnpj, cpf, documento, doc |
+| Nota Fiscal | nf, nota, numero, num |
+
+## Testes
+
+```bash
+# Gerar planilhas de exemplo
+python tests/gerar_fixtures.py
+
+# Rodar testes
+pytest
+```
+
+## Requisitos
+
+- Python 3.10+
+- pandas, openpyxl, typer, rich, rapidfuzz, pyyaml

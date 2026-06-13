@@ -1,0 +1,41 @@
+# Configuração do Sistema Financeiro
+# Copie para config.yaml e ajuste conforme sua necessidade
+
+conciliacao:
+  tolerancia_dias: 1          # Diferença máxima de dias para considerar match
+  tolerancia_valor: 0.01      # Diferença máxima de valor (centavos)
+  colunas_banco:
+    data: "Data"
+    valor: "Valor"
+    descricao: "Descrição"
+  colunas_interno:
+    data: "Data"
+    valor: "Valor"
+    descricao: "Histórico"
+
+consolidador:
+  pasta_entrada: "./dados"
+  formato_data_saida: "%d/%m/%Y"
+  separador_decimal: ","
+  encoding: "utf-8"
+
+relatorios:
+  periodo: "mensal"           # diario, semanal, mensal
+  categorias_receita:
+    - "Vendas"
+    - "Serviços"
+    - "Receita Financeira"
+  categorias_despesa:
+    - "Pessoal"
+    - "Aluguel"
+    - "Fornecedores"
+    - "Impostos"
+    - "Outros"
+
+validador:
+  validar_cnpj: true
+  validar_cpf: true
+  detectar_duplicados: true
+  detectar_datas_futuras: true
+  detectar_outliers: true
+  fator_outlier: 3.0          # Multiplicador do desvio padrão

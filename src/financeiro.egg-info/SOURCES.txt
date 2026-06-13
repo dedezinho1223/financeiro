@@ -1,0 +1,16 @@
+README.md
+pyproject.toml
+src/financeiro/__init__.py
+src/financeiro/cli.py
+src/financeiro/conciliacao.py
+src/financeiro/consolidador.py
+src/financeiro/relatorios.py
+src/financeiro/utils.py
+src/financeiro/validador.py
+src/financeiro.egg-info/PKG-INFO
+src/financeiro.egg-info/SOURCES.txt
+src/financeiro.egg-info/dependency_links.txt
+src/financeiro.egg-info/entry_points.txt
+src/financeiro.egg-info/requires.txt
+src/financeiro.egg-info/top_level.txt
+tests/test_utils.py
