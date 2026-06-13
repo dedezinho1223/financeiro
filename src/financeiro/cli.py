@@ -16,7 +16,7 @@ from rich.panel import Panel
 app = typer.Typer(
     name="financeiro",
     help="Sistema Financeiro Automatizado — Conciliação, Consolidação, Relatórios e Validação.",
-    no_args_is_help=True,
+    invoke_without_command=True,
 )
 console = Console()
 
